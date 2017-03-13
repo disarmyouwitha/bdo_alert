@@ -5,7 +5,16 @@ from PIL import Image
 from PIL import ImageGrab
 from playsound import playsound
 
+from skimage.measure import structural_similarity as ssim
+import matplotlib.pyplot as plt
+import numpy as np
+import cv2
+
+print 'boo'
+
+# [Buffs are 32x32 squares]:
 # http://www.pyimagesearch.com/2014/09/15/python-compare-two-images/
+# http://stackoverflow.com/questions/189943/how-can-i-quantify-difference-between-two-images
 
 #time.sleep(5)
 #bbox=(400,800,700,1000)
