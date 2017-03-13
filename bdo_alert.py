@@ -5,9 +5,11 @@ from PIL import Image
 from PIL import ImageGrab
 from playsound import playsound
 
-time.sleep(5)
-bbox=(400,800,700,1000)
-ImageGrab.grab(bbox).save('screen_capture.png')
+# http://www.pyimagesearch.com/2014/09/15/python-compare-two-images/
+
+#time.sleep(5)
+#bbox=(400,800,700,1000)
+#ImageGrab.grab(bbox).save('screen_capture.png')
 
 '''
 pix = im.load()
