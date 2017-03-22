@@ -10,11 +10,58 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
-print 'boo'
-
-# [Buffs are 32x32 squares]:
+# Sample code to load 1 buff image and compare against list of buff images to determine if buff is up!
 # http://www.pyimagesearch.com/2014/09/15/python-compare-two-images/
-# http://stackoverflow.com/questions/189943/how-can-i-quantify-difference-between-two-images
+# [Buffs are 32x32 squares]
+def compare_images(imageA, imageB, title):
+    s = ssim(imageA, imageB)
+
+    # setup the figure
+    fig = plt.figure(title)
+    plt.suptitle('SSIM: %.2f' % (s))
+
+    # show first image
+    ax = fig.add_subplot(1, 2, 1)
+    plt.imshow(imageA, cmap = plt.cm.gray)
+    plt.axis('off')
+
+    # show the second image
+    ax = fig.add_subplot(1, 2, 2)
+    plt.imshow(imageB, cmap = plt.cm.gray)
+    plt.axis('off')
+
+    # show the images
+    plt.show()
+
+# Load images:
+original = cv2.imread('fishing_buff_icon.jpg')
+desert_day = cv2.imread('desert_debuff_day_icon.JPG')
+move_buff = cv2.imread('movement_buff_icon.jpg')
+fishing_buff = cv2.imread('fishing_buff_icon.jpg')
+gathering_buff = cv2.imread('gathering_buff_icon.jpg')
+item_obtain_buff = cv2.imread('item_obtain_buff_icon.jpg')
+desert_night = cv2.imread('desert_debuff_night_icon.JPG')
+
+# convert the images to grayscale
+original = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)
+desert_day = cv2.cvtColor(desert_day, cv2.COLOR_BGR2GRAY)
+move_buff = cv2.cvtColor(move_buff, cv2.COLOR_BGR2GRAY)
+fishing_buff = cv2.cvtColor(fishing_buff, cv2.COLOR_BGR2GRAY)
+gathering_buff = cv2.cvtColor(gathering_buff, cv2.COLOR_BGR2GRAY)
+item_obtain_buff = cv2.cvtColor(item_obtain_buff, cv2.COLOR_BGR2GRAY)
+desert_night = cv2.cvtColor(desert_night, cv2.COLOR_BGR2GRAY)
+
+# compare the images
+compare_images(original, desert_day, 'Original vs. Desert Day')
+compare_images(original, move_buff, 'Original vs. Movement')
+compare_images(original, fishing_buff, 'Original vs. Fishing')
+compare_images(original, gathering_buff, 'Original vs. Gathering')
+compare_images(original, item_obtain_buff, 'Original vs. Item Obtain')
+compare_images(original, desert_night, 'Original vs. Desert Night')
+
+
+# TEST MARKETPLACE NOTIFICATION ALERTS / EASIER THAN BUFF BOT?
+# Code to grab buffs from screen / code to play sound:
 
 #time.sleep(5)
 #bbox=(400,800,700,1000)
