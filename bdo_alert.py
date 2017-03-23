@@ -1,98 +1,106 @@
 import os
 import sys
+import cv2
 import time
+import numpy
 from PIL import Image
 from PIL import ImageGrab
-from playsound import playsound
-
-from skimage.measure import structural_similarity as ssim
 import matplotlib.pyplot as plt
-import numpy as np
-import cv2
+from playsound import playsound
+from skimage.measure import structural_similarity as ssim
 
-# Sample code to load 1 buff image and compare against list of buff images to determine if buff is up!
 # http://www.pyimagesearch.com/2014/09/15/python-compare-two-images/
-# [Buffs are 32x32 squares]
-def compare_images(imageA, imageB, title):
-    s = ssim(imageA, imageB)
 
-    # setup the figure
-    fig = plt.figure(title)
-    plt.suptitle('SSIM: %.2f' % (s))
+known_buffs = {}
 
-    # show first image
-    ax = fig.add_subplot(1, 2, 1)
-    plt.imshow(imageA, cmap = plt.cm.gray)
-    plt.axis('off')
+def load_known_buffs():
+    desert_day = cv2.imread('desert_debuff_day_icon.JPG')
+    desert_night = cv2.imread('desert_debuff_night_icon.JPG')
+    movement_buff = cv2.imread('movement_buff_icon.jpg')
+    fishing_buff = cv2.imread('fishing_buff_icon.jpg')
+    gathering_buff = cv2.imread('gathering_buff_icon.jpg')
+    item_obtain_buff = cv2.imread('item_obtain_buff_icon.jpg')
+    #desert_contrast = cv2.imread('desert_debuff_day_icon_contrast.JPG')
 
-    # show the second image
-    ax = fig.add_subplot(1, 2, 2)
-    plt.imshow(imageB, cmap = plt.cm.gray)
-    plt.axis('off')
+    # convert the images to grayscale
+    _desert_day = cv2.cvtColor(desert_day, cv2.COLOR_BGR2GRAY)
+    _desert_night = cv2.cvtColor(desert_night, cv2.COLOR_BGR2GRAY)
+    _movement_buff = cv2.cvtColor(movement_buff, cv2.COLOR_BGR2GRAY)
+    _fishing_buff = cv2.cvtColor(fishing_buff, cv2.COLOR_BGR2GRAY)
+    _gathering_buff = cv2.cvtColor(gathering_buff, cv2.COLOR_BGR2GRAY)
+    _item_obtain_buff = cv2.cvtColor(item_obtain_buff, cv2.COLOR_BGR2GRAY)
+    #_desert_contrast = cv2.cvtColor(desert_contrast, cv2.COLOR_BGR2GRAY)
 
-    # show the images
-    plt.show()
+    global known_buffs
+    known_buffs['desert_day'] = _desert_day
+    known_buffs['desert_night'] = _desert_night
+    known_buffs['movement_buff'] = _movement_buff
+    known_buffs['fishing_buff'] = _fishing_buff
+    known_buffs['gathering_buff'] = _gathering_buff
+    known_buffs['item_obtain_buff'] = _item_obtain_buff
 
-# Load images:
-original = cv2.imread('fishing_buff_icon.jpg')
-desert_day = cv2.imread('desert_debuff_day_icon.JPG')
-move_buff = cv2.imread('movement_buff_icon.jpg')
-fishing_buff = cv2.imread('fishing_buff_icon.jpg')
-gathering_buff = cv2.imread('gathering_buff_icon.jpg')
-item_obtain_buff = cv2.imread('item_obtain_buff_icon.jpg')
-desert_night = cv2.imread('desert_debuff_night_icon.JPG')
+def compare_buffs(buff_a, buff_b):
+    s = ssim(buff_a, buff_b)
+    #print '%.2f' % s
+    return s
 
-# convert the images to grayscale
-original = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)
-desert_day = cv2.cvtColor(desert_day, cv2.COLOR_BGR2GRAY)
-move_buff = cv2.cvtColor(move_buff, cv2.COLOR_BGR2GRAY)
-fishing_buff = cv2.cvtColor(fishing_buff, cv2.COLOR_BGR2GRAY)
-gathering_buff = cv2.cvtColor(gathering_buff, cv2.COLOR_BGR2GRAY)
-item_obtain_buff = cv2.cvtColor(item_obtain_buff, cv2.COLOR_BGR2GRAY)
-desert_night = cv2.cvtColor(desert_night, cv2.COLOR_BGR2GRAY)
+def return_buff(unknown_buff, success_threshold=.8, debug=False):
+    _meets_threshold = {}
 
-# compare the images
-compare_images(original, desert_day, 'Original vs. Desert Day')
-compare_images(original, move_buff, 'Original vs. Movement')
-compare_images(original, fishing_buff, 'Original vs. Fishing')
-compare_images(original, gathering_buff, 'Original vs. Gathering')
-compare_images(original, item_obtain_buff, 'Original vs. Item Obtain')
-compare_images(original, desert_night, 'Original vs. Desert Night')
+    for buff_name, buff_icon in known_buffs.iteritems():
+        _buff_ssim = compare_buffs(unknown_buff, buff_icon)
+        if _buff_ssim >= success_threshold:
+            _meets_threshold[buff_name] = _buff_ssim
+
+    if len(_meets_threshold) == 1:
+        return _meets_threshold.items()[0]
+    else:
+        if debug == True:
+            print _meets_threshold
+            # determine highest && return?
+        else:
+            return ('err', 'no buff matched')
 
 
-# TEST MARKETPLACE NOTIFICATION ALERTS / EASIER THAN BUFF BOT?
-# Code to grab buffs from screen / code to play sound:
+def read_buff_bar(_buff_bar):
+    size = 32
+    offset_x = 4
+    offset_y = 4
+    buff_spacing = 33
+    active_buffs = []
 
+    _done = False
+    while _done == False:
+        _buff_bounds = (offset_x, offset_y, offset_x+size, offset_y+size)
+        _buff_box = _buff_bar.crop(_buff_bounds)
+
+        # Convert from PIL to CV2 image:
+        pil_buff = _buff_box.convert('RGB')
+        open_cv_buff = numpy.array(pil_buff)
+        # Convert from RGB to BGR / GRAYscale:
+        open_cv_buff = open_cv_buff[:, :, ::-1].copy()
+        _unknown_buff = cv2.cvtColor(open_cv_buff, cv2.COLOR_BGR2GRAY)
+
+        (buff_name, buff_ssim) = return_buff(_unknown_buff)
+        #(buff_name, buff_ssim) = return_buff(known_buffs['fishing_buff'])
+        print '%s | %s' % (buff_name, buff_ssim)
+
+        if buff_name == 'err':
+            _done = True
+        else:
+            offset_x += buff_spacing
+
+
+load_known_buffs()
+active_buffs = read_buff_bar(Image.open('buffbar_day.jpg'))
+
+
+# Code to grab box from screen:
 #time.sleep(5)
-#bbox=(400,800,700,1000)
-#ImageGrab.grab(bbox).save('screen_capture.png')
+#bbox=(100,400,400,700)
+#img = ImageGrab.grab(bbox).save('screen_capture.png')
 
-'''
-pix = im.load()
-print im.size #Get the width and hight of the image for iterating over
-print pix[17,40] #Get the RGBA Value of the a pixel of an image (x,y)
-
-im_out = Image.new("RGB", (128, 128))
-pix_out = im_out.load()
-for x in range(128):
-    for y in range(128):
-        pix_out[x,y] = pix[17,40] #(255,0,0)
-
-#im_out.save("test.png", "PNG")
-im_out.show()
-'''
-
-#im = Image.open('desert_debuff_day.JPG')
-# buffbar_day.JPG:
-# (100,100): (194,172,135) | Sand
-# (93,92): (199,175,139) | Sand
-
-# desert_debuff_day.JPG:
-# (8,45): (111,96,73) | Debuff border
-# (17,40): (237,229,227) | Debuff, 1st M
-
-'''
-playsound('audio/sms_alert.mp3')
+# Code to play sound:
+#playsound('audio/sms_alert.mp3')
 #playsound('audio/bomb_siren.mp3')
 #playsound('audio/eas_beep.mp3')
-'''
