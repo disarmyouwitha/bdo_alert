@@ -132,9 +132,17 @@ def read_debuff_bar(_buff_bar):
 
 
 def screen_grab_buff_box():
+    # Need to test/find bounds of box for my screen resolution, collect some more buffs for known_buffs list, test out in desert:
+    time.sleep(3)
+    bbox=(100,400,400,700)
+    img = ImageGrab.grab(bbox).save('screen_capture.png')
+
+
+    '''
     # Code to ImageGrab screenshot of buffs/debuff bounds.. pass to reader functions:
     buff_bar = Image.open('buffbar_day.jpg')
 
+    # Read buffs/debuffs:
     active_buffs = read_buff_bar(buff_bar)
     active_debuffs = read_debuff_bar(buff_bar)
 
@@ -145,22 +153,15 @@ def screen_grab_buff_box():
     # Or play a sound if a certain buff is active:
     if 'desert_day' or 'desert_night' in active_debuffs:
         print '[playing audio]'
-        playsound('audio/eas_beep.mp3')
+        #playsound('audio/eas_beep.mp3')
+        #playsound('audio/sms_alert.mp3')
+        #playsound('audio/bomb_siren.mp3')
+        #playsound('audio/eas_beep.mp3')
+    '''
 
 if __name__ == '__main__':
     load_known_buffs()
 
     l = task.LoopingCall(screen_grab_buff_box)
-    l.start(60) # call every min
+    l.start(10) # call every x seconds
     reactor.run()
-
-
-# Code to grab box from screen:
-#time.sleep(5)
-#bbox=(100,400,400,700)
-#img = ImageGrab.grab(bbox).save('screen_capture.png')
-
-# Code to play sound:
-#playsound('audio/sms_alert.mp3')
-#playsound('audio/bomb_siren.mp3')
-#playsound('audio/eas_beep.mp3')
