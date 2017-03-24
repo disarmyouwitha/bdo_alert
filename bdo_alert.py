@@ -66,8 +66,10 @@ def return_buff(unknown_buff, success_threshold=.8, debug=False):
 
 def read_buff_bar(_buff_bar):
     size = 32
-    offset_x = 0
+    offset_x = 4
     offset_y = 0
+    #offset_x = 4
+    #offset_y = 4
     buff_spacing = 33
     active_buffs = []
 
@@ -100,8 +102,10 @@ def read_buff_bar(_buff_bar):
 
 def read_debuff_bar(_buff_bar):
     size = 32
-    offset_x = 0
+    offset_x = 4
     offset_y = 54
+    #offset_x = 4
+    #offset_y = 4
     buff_spacing = 33
     active_debuffs = []
 
@@ -134,19 +138,22 @@ def read_debuff_bar(_buff_bar):
 
 
 def screen_grab_buff_box():
-    # 1920 x 1200, windowed mode:
-    offset_x = 657
-    offset_y = 949
+    offset_x = 660
+    offset_y = 1040
     box_width = 300
-    box_height= 103
+    box_height= 105
 
-    # Code to ImageGrab screenshot of buffs/debuff bounds.. pass to reader functions:
     #time.sleep(3)
+    #(offset_y- (20-50) for border)
     bbox=(offset_x, offset_y, offset_x+box_width, offset_y+box_height)
     img = ImageGrab.grab(bbox).save('screen_capture.png')
+
+    #im = Image.open('screen_capture.png')
+    #im.show()
+
+    # Code to ImageGrab screenshot of buffs/debuff bounds.. pass to reader functions:
+    #buff_bar = Image.open('buffbar_day.jpg')
     buff_bar = Image.open('screen_capture.png')
-    #buff_bar.show()
-    #sys.exit(1)
 
     # Read buffs/debuffs:
     active_buffs = read_buff_bar(buff_bar)
@@ -161,12 +168,13 @@ def screen_grab_buff_box():
         if 'desert_day' or 'desert_night' in active_debuffs:
             print '[playing audio]'
             #playsound('audio/eas_beep.mp3')
-            playsound('audio/sms_alert.mp3')
+            #playsound('audio/sms_alert.mp3')
             #playsound('audio/bomb_siren.mp3')
+            #playsound('audio/eas_beep.mp3')
 
 if __name__ == '__main__':
     load_known_buffs()
     #screen_grab_buff_box()
     l = task.LoopingCall(screen_grab_buff_box)
-    l.start(5) # call every x seconds
+    l.start(10) # call every x seconds
     reactor.run()
