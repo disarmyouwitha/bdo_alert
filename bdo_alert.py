@@ -7,6 +7,8 @@ from PIL import Image
 from PIL import ImageGrab
 import matplotlib.pyplot as plt
 from playsound import playsound
+from twisted.internet import task
+from twisted.internet import reactor
 from skimage.measure import structural_similarity as ssim
 
 # http://www.pyimagesearch.com/2014/09/15/python-compare-two-images/
@@ -69,6 +71,7 @@ def read_buff_bar(_buff_bar):
     buff_spacing = 33
     active_buffs = []
 
+    # Read active buffs:
     _done = False
     while _done == False:
         _buff_bounds = (offset_x, offset_y, offset_x+size, offset_y+size)
@@ -77,22 +80,79 @@ def read_buff_bar(_buff_bar):
         # Convert from PIL to CV2 image:
         pil_buff = _buff_box.convert('RGB')
         open_cv_buff = numpy.array(pil_buff)
+
         # Convert from RGB to BGR / GRAYscale:
         open_cv_buff = open_cv_buff[:, :, ::-1].copy()
         _unknown_buff = cv2.cvtColor(open_cv_buff, cv2.COLOR_BGR2GRAY)
 
         (buff_name, buff_ssim) = return_buff(_unknown_buff)
-        #(buff_name, buff_ssim) = return_buff(known_buffs['fishing_buff'])
-        print '%s | %s' % (buff_name, buff_ssim)
+        #print '%s | %s' % (buff_name, buff_ssim)
 
         if buff_name == 'err':
             _done = True
         else:
+            active_buffs.append(buff_name)
             offset_x += buff_spacing
 
+    return active_buffs
 
-load_known_buffs()
-active_buffs = read_buff_bar(Image.open('buffbar_day.jpg'))
+def read_debuff_bar(_buff_bar):
+    size = 32
+    offset_x = 4
+    offset_y = 58
+    buff_spacing = 33
+    active_debuffs = []
+
+    # Read active buffs:
+    _done = False
+    while _done == False:
+        _buff_bounds = (offset_x, offset_y, offset_x+size, offset_y+size)
+        _buff_box = _buff_bar.crop(_buff_bounds)
+        #_buff_box.show()
+        #sys.exit(1)
+
+        # Convert from PIL to CV2 image:
+        pil_buff = _buff_box.convert('RGB')
+        open_cv_buff = numpy.array(pil_buff)
+
+        # Convert from RGB to BGR / GRAYscale:
+        open_cv_buff = open_cv_buff[:, :, ::-1].copy()
+        _unknown_buff = cv2.cvtColor(open_cv_buff, cv2.COLOR_BGR2GRAY)
+
+        (buff_name, buff_ssim) = return_buff(_unknown_buff)
+        #print '%s | %s' % (buff_name, buff_ssim)
+
+        if buff_name == 'err':
+            _done = True
+        else:
+            active_debuffs.append(buff_name)
+            offset_x += buff_spacing
+
+    return active_debuffs
+
+
+def screen_grab_buff_box():
+    # Code to ImageGrab screenshot of buffs/debuff bounds.. pass to reader functions:
+    buff_bar = Image.open('buffbar_day.jpg')
+
+    active_buffs = read_buff_bar(buff_bar)
+    active_debuffs = read_debuff_bar(buff_bar)
+
+    # Print them out for test..
+    print active_buffs
+    print active_debuffs
+
+    # Or play a sound if a certain buff is active:
+    if 'desert_day' or 'desert_night' in active_debuffs:
+        print '[playing audio]'
+        playsound('audio/eas_beep.mp3')
+
+if __name__ == '__main__':
+    load_known_buffs()
+
+    l = task.LoopingCall(screen_grab_buff_box)
+    l.start(60) # call every min
+    reactor.run()
 
 
 # Code to grab box from screen:
